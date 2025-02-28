@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.querySelector('.game-container');
     const scoreElement = document.getElementById('score');
     const gameOverOverlay = document.getElementById('game-over-overlay');
+    const pauseOverlay = document.getElementById('pause-overlay');
     const finalScoreElement = document.getElementById('final-score');
     
     // 游戏参数
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let foodElement = null; // 存储食物的SVG元素
     let direction = 'right';
     let gameRunning = false;
+    let gamePaused = false;
     let score = 0;
     let gameSpeed = 150; // 移动速度（毫秒）
     let gameInterval;
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     
     const startBtn = document.getElementById('start-btn');
+    const pauseBtn = document.getElementById('pause-btn');
     
     // 初始化游戏
     function initGame() {
@@ -39,8 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
             gameInterval = null;
         }
         
-        // 隐藏游戏结束覆盖层
+        // 隐藏游戏结束覆盖层和暂停覆盖层
         gameOverOverlay.classList.remove('visible');
+        pauseOverlay.classList.remove('visible');
         
         // 清除SVG中的所有元素（除了背景和定义）
         const elementsToClear = svg.querySelectorAll('rect:not([fill^="url(#grid-pattern)"]), circle');
@@ -57,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         snake = [];
         snakeElements = [];
         foodElement = null;
+        gamePaused = false;
         
         // 初始化蛇的位置（中间三格）
         snake = [
@@ -114,8 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
         gameRunning = true;
         gameInterval = setInterval(gameLoop, gameSpeed);
         
-        // 更新按钮文字
+        // 更新按钮状态
         startBtn.textContent = '重新开始';
+        pauseBtn.disabled = false;
+        pauseBtn.textContent = '暂停';
     }
     
     // 确保渐变定义存在
@@ -287,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 游戏主循环
     function gameLoop() {
-        if (!gameRunning) return;
+        if (!gameRunning || gamePaused) return;
         
         updateSnake();
         checkCollision();
@@ -506,17 +513,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // 游戏结束
     function gameOver() {
         gameRunning = false;
+        gamePaused = false;
         clearInterval(gameInterval);
         gameInterval = null;
         
         // 显示游戏结束覆盖层
         finalScoreElement.textContent = score;
         gameOverOverlay.classList.add('visible');
+        
+        // 禁用暂停按钮
+        pauseBtn.disabled = true;
+    }
+    
+    // 暂停游戏
+    function pauseGame() {
+        if (!gameRunning) return;
+        
+        gamePaused = !gamePaused;
+        
+        if (gamePaused) {
+            // 显示暂停覆盖层
+            pauseOverlay.classList.add('visible');
+            pauseBtn.textContent = '继续';
+        } else {
+            // 隐藏暂停覆盖层
+            pauseOverlay.classList.remove('visible');
+            pauseBtn.textContent = '暂停';
+        }
     }
     
     // 监听按键事件
     document.addEventListener('keydown', (event) => {
         if (!gameRunning) return;
+        
+        if (event.code === 'Space') {
+            pauseGame();
+            return;
+        }
+        
+        if (gamePaused) return;
         
         switch (event.key) {
             case 'ArrowUp':
@@ -536,4 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 开始/重新开始按钮点击事件
     startBtn.addEventListener('click', initGame);
+    
+    // 暂停按钮点击事件
+    pauseBtn.addEventListener('click', pauseGame);
 });

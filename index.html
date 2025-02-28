@@ -11,7 +11,10 @@
         <h1>贪吃蛇游戏</h1>
         <div class="game-info">
             <div class="score">分数: <span id="score">0</span></div>
-            <button id="start-btn">开始游戏</button>
+            <div class="control-buttons">
+                <button id="start-btn">开始游戏</button>
+                <button id="pause-btn" disabled>暂停</button>
+            </div>
         </div>
         <div class="svg-container">
             <div class="corner-decoration"></div>
@@ -52,12 +55,17 @@
                 <div class="game-over-text">游戏结束!</div>
                 <div class="final-score">最终分数: <span id="final-score">0</span></div>
             </div>
+            <div class="pause-overlay" id="pause-overlay">
+                <div class="pause-text">游戏暂停</div>
+                <div class="pause-info">按空格键或点击暂停按钮继续</div>
+            </div>
         </div>
         <div class="instructions">
             <h2>游戏说明</h2>
             <p>使用方向键 ↑ ↓ ← → 控制蛇的移动方向</p>
             <p>吃到食物会增加分数和蛇的长度</p>
             <p>撞到墙壁或自己会结束游戏</p>
+            <p>空格键或暂停按钮可暂停/继续游戏</p>
         </div>
     </div>
     <script src="script.js"></script>
