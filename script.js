@@ -23,10 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 初始化游戏
     function initGame() {
+        // 停止现有游戏循环
+        if (gameInterval) {
+            clearInterval(gameInterval);
+            gameInterval = null;
+        }
+        
         // 清除SVG中的所有元素
         while (svg.firstChild) {
             svg.removeChild(svg.firstChild);
         }
+        
+        // 清空数组和变量
+        snake = [];
+        snakeElements = [];
+        foodElement = null;
         
         // 初始化蛇的位置（中间三格）
         snake = [
@@ -36,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         
         // 生成SVG中的蛇元素
-        snakeElements = [];
         snake.forEach((segment, index) => {
             const rect = document.createElementNS(svgNS, 'rect');
             rect.setAttribute('x', segment.x * gridSize);
@@ -49,16 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
             snakeElements.push(rect);
         });
         
-        // 生成第一个食物
-        generateFood();
-        
         // 重置状态
         direction = 'right';
         score = 0;
         scoreDisplay.textContent = score;
         
+        // 生成第一个食物
+        createNewFood();
+        
         // 开始游戏循环
-        if (gameInterval) clearInterval(gameInterval);
         gameRunning = true;
         gameInterval = setInterval(gameLoop, gameSpeed);
         
@@ -66,23 +75,33 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.textContent = '重新开始';
     }
     
-    // 生成食物
-    function generateFood() {
-        food = {
-            x: Math.floor(Math.random() * gridWidth),
-            y: Math.floor(Math.random() * gridHeight)
-        };
+    // 生成食物 - 修复递归问题
+    function createNewFood() {
+        let validPosition = false;
+        let newFood = {};
         
-        // 确保食物不会生成在蛇身上
-        for (let segment of snake) {
-            if (segment.x === food.x && segment.y === food.y) {
-                generateFood(); // 递归重试
-                return;
+        // 循环直到找到一个有效的食物位置
+        while (!validPosition) {
+            newFood = {
+                x: Math.floor(Math.random() * gridWidth),
+                y: Math.floor(Math.random() * gridHeight)
+            };
+            
+            // 检查是否与蛇身体重叠
+            validPosition = true;
+            for (let segment of snake) {
+                if (segment.x === newFood.x && segment.y === newFood.y) {
+                    validPosition = false;
+                    break;
+                }
             }
         }
         
+        // 保存新食物位置
+        food = newFood;
+        
         // 如果已经有食物元素，先移除
-        if (foodElement) {
+        if (foodElement && foodElement.parentNode) {
             svg.removeChild(foodElement);
         }
         
@@ -99,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 游戏主循环
     function gameLoop() {
+        if (!gameRunning) return;
+        
         updateSnake();
         checkCollision();
         if (gameRunning) {
@@ -126,10 +147,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // 吃到食物，加分并生成新食物
             score += 10;
             scoreDisplay.textContent = score;
-            generateFood();
+            createNewFood();
             
             // 创建新的头部SVG元素
             const newHeadElement = document.createElementNS(svgNS, 'rect');
+            newHeadElement.setAttribute('x', head.x * gridSize);
+            newHeadElement.setAttribute('y', head.y * gridSize);
             newHeadElement.setAttribute('width', gridSize);
             newHeadElement.setAttribute('height', gridSize);
             newHeadElement.setAttribute('class', 'snake-head');
@@ -147,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 没吃到食物，移除尾部
             snake.pop();
             
-            // 如果蛇长度没变，只需更新现有元素的位置
             // 原来的头部变成身体
             if (snakeElements.length > 0) {
                 snakeElements[0].setAttribute('class', 'snake-body');
@@ -155,12 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 移除尾部元素
             const tailElement = snakeElements.pop();
-            if (tailElement) {
+            if (tailElement && tailElement.parentNode) {
                 svg.removeChild(tailElement);
             }
             
             // 创建新的头部
             const newHeadElement = document.createElementNS(svgNS, 'rect');
+            newHeadElement.setAttribute('x', head.x * gridSize);
+            newHeadElement.setAttribute('y', head.y * gridSize);
             newHeadElement.setAttribute('width', gridSize);
             newHeadElement.setAttribute('height', gridSize);
             newHeadElement.setAttribute('class', 'snake-head');
@@ -173,6 +197,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 绘制蛇
     function drawSnake() {
+        // 确保蛇元素和位置数据长度一致
+        if (snake.length !== snakeElements.length) {
+            console.error('蛇元素和位置数据不一致:', snake.length, snakeElements.length);
+            return;
+        }
+        
         // 更新每个蛇段的位置
         for (let i = 0; i < snake.length; i++) {
             const segment = snake[i];
@@ -208,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameOver() {
         gameRunning = false;
         clearInterval(gameInterval);
+        gameInterval = null;
         alert(`游戏结束! 你的分数: ${score}`);
     }
     
