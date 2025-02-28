@@ -325,16 +325,14 @@ h1::after {
     ry: 10;
     filter: drop-shadow(0 0 5px rgba(255, 82, 82, 0.7));
     transform-origin: center;
-    animation: pulse 1.5s infinite alternate ease-in-out;
 }
 
-@keyframes pulse {
+/* 移除食物的pulse动画，防止它到处移动 */
+@keyframes glow {
     from {
-        transform: scale(0.92);
         filter: drop-shadow(0 0 3px rgba(255, 82, 82, 0.7));
     }
     to {
-        transform: scale(1.08);
         filter: drop-shadow(0 0 8px rgba(255, 82, 82, 0.9));
     }
 }
