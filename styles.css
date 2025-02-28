@@ -6,17 +6,76 @@ body {
     height: 100vh;
     margin: 0;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    transition: background 0.5s ease;
+    transition: background 1.5s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+/* 添加背景动态效果 */
+body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    animation: rotateBackground 60s linear infinite;
+    opacity: 0.5;
+    z-index: -1;
+}
+
+@keyframes rotateBackground {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .game-container {
     text-align: center;
     background-color: white;
     padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform: scale(1);
+    position: relative;
+    overflow: hidden;
+}
+
+.game-container::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 20px;
+    z-index: -1;
+    background: linear-gradient(45deg, #4CAF50, #8BC34A, #4CAF50);
+    background-size: 200% 200%;
+    animation: gradientBorder 3s ease infinite;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.game-container:hover::after {
+    opacity: 0.3;
+}
+
+@keyframes gradientBorder {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 h1 {
@@ -24,18 +83,22 @@ h1 {
     margin-top: 0;
     position: relative;
     display: inline-block;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 h1::after {
     content: '';
     position: absolute;
     width: 50%;
-    height: 2px;
-    background-color: #4CAF50;
-    bottom: -5px;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(76,175,80,0) 0%, rgba(76,175,80,1) 50%, rgba(76,175,80,0) 100%);
+    bottom: -8px;
     left: 25%;
     transform: scaleX(0);
-    transition: transform 0.3s ease;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 3px;
 }
 
 .game-container:hover h1::after {
@@ -52,91 +115,203 @@ h1::after {
 .score {
     font-size: 1.2em;
     font-weight: bold;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    padding: 8px 15px;
+    border-radius: 30px;
+    background: linear-gradient(to right, rgba(76,175,80,0.1), rgba(139,195,74,0.1));
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 .score-up {
-    transform: scale(1.2);
+    transform: scale(1.3);
     color: #FF5252;
+    text-shadow: 0 0 5px rgba(255, 82, 82, 0.5);
+}
+
+/* 添加分数变化时的粒子效果 */
+.score-particle {
+    position: absolute;
+    font-size: 0.8em;
+    color: #FF5252;
+    font-weight: bold;
+    pointer-events: none;
+    animation: flyUp 1s ease-out forwards;
+    z-index: 100;
+}
+
+@keyframes flyUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
 }
 
 #game-svg {
-    background: linear-gradient(to right bottom, #e8f5e9, #c8e6c9);
-    border: 2px solid #4CAF50;
-    border-radius: 5px;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border: 3px solid rgba(76, 175, 80, 0.7);
+    border-radius: 10px;
+    transition: all 0.5s ease;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .svg-container {
     display: inline-block;
     position: relative;
     overflow: hidden;
-    border-radius: 5px;
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.2);
+}
+
+/* 游戏区域四角装饰 */
+.svg-container::before,
+.svg-container::after,
+.svg-container > ::before,
+.svg-container > ::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: rgba(76, 175, 80, 0.5);
+    border-style: solid;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.svg-container::before {
+    top: 5px;
+    left: 5px;
+    border-width: 3px 0 0 3px;
+    border-radius: 5px 0 0 0;
+}
+
+.svg-container::after {
+    top: 5px;
+    right: 5px;
+    border-width: 3px 3px 0 0;
+    border-radius: 0 5px 0 0;
+}
+
+.svg-container > ::before {
+    bottom: 5px;
+    left: 5px;
+    border-width: 0 0 3px 3px;
+    border-radius: 0 0 0 5px;
+}
+
+.svg-container > ::after {
+    bottom: 5px;
+    right: 5px;
+    border-width: 0 3px 3px 0;
+    border-radius: 0 0 5px 0;
 }
 
 #start-btn {
     background: linear-gradient(45deg, #4CAF50, #8BC34A);
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 25px;
     border-radius: 30px;
     cursor: pointer;
     font-size: 1em;
     font-weight: bold;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
     outline: none;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+#start-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.8s ease;
+}
+
+#start-btn:hover::before {
+    left: 100%;
 }
 
 #start-btn:hover {
     background: linear-gradient(45deg, #388E3C, #689F38);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3);
 }
 
 #start-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
 }
 
 .instructions {
     margin-top: 20px;
     text-align: left;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
+    padding: 18px;
+    background-color: rgba(249, 249, 249, 0.8);
+    border-radius: 10px;
     transition: all 0.3s ease;
+    border-left: 4px solid #4CAF50;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .instructions:hover {
     background-color: #f0f9f0;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
 }
 
 .instructions h2 {
     font-size: 1.2em;
-    color: #4CAF50;
+    color: #388E3C;
     margin-top: 0;
+    border-bottom: 2px dashed rgba(76, 175, 80, 0.2);
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.instructions p {
+    line-height: 1.6;
+    margin: 8px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.instructions p::before {
+    content: '•';
+    position: absolute;
+    left: 5px;
+    color: #4CAF50;
+    font-weight: bold;
 }
 
 /* SVG 元素样式 */
 .snake-head {
-    fill: #388E3C;
+    fill: url(#snake-head-gradient);
     stroke: #e8f5e9;
     stroke-width: 2px;
-    rx: 4;
-    ry: 4;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2));
-    transition: fill 0.2s ease;
+    rx: 5;
+    ry: 5;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+    transition: all 0.2s ease;
 }
 
 .snake-body {
-    fill: #4CAF50;
-    stroke: #e8f5e9;
-    stroke-width: 1px;
-    rx: 3;
-    ry: 3;
+    stroke: rgba(232, 245, 233, 0.8);
+    stroke-width: 1.5px;
+    rx: 4;
+    ry: 4;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     transition: all 0.2s ease;
 }
 
@@ -145,27 +320,27 @@ h1::after {
 }
 
 .food {
-    fill: #FF5252;
+    fill: url(#food-gradient);
     rx: 10;
     ry: 10;
-    filter: drop-shadow(0 0 3px rgba(255, 82, 82, 0.7));
+    filter: drop-shadow(0 0 5px rgba(255, 82, 82, 0.7));
     transform-origin: center;
-    animation: pulse 1s infinite alternate;
+    animation: pulse 1.5s infinite alternate ease-in-out;
 }
 
 @keyframes pulse {
     from {
-        transform: scale(0.95);
-        fill: #FF5252;
+        transform: scale(0.92);
+        filter: drop-shadow(0 0 3px rgba(255, 82, 82, 0.7));
     }
     to {
-        transform: scale(1.05);
-        fill: #FF7373;
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 8px rgba(255, 82, 82, 0.9));
     }
 }
 
 .food-eaten {
-    animation: eaten 0.5s ease forwards;
+    animation: eaten 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
 }
 
 @keyframes eaten {
@@ -173,8 +348,13 @@ h1::after {
         transform: scale(1);
         opacity: 1;
     }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+        filter: drop-shadow(0 0 15px rgba(255, 82, 82, 1));
+    }
     100% {
-        transform: scale(2);
+        transform: scale(2.5);
         opacity: 0;
     }
 }
@@ -191,40 +371,97 @@ h1::after {
     justify-content: center;
     align-items: center;
     color: white;
-    border-radius: 5px;
+    border-radius: 10px;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease;
     z-index: 10;
+    backdrop-filter: blur(5px);
 }
 
 .game-over-overlay.visible {
     opacity: 1;
     pointer-events: all;
+    animation: pulseOverlay 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseOverlay {
+    0% {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    100% {
+        background-color: rgba(76, 175, 80, 0.3);
+    }
 }
 
 .game-over-text {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
+    letter-spacing: 2px;
+    animation: shakeText 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shakeText {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    20%, 60% {
+        transform: translateX(-5px);
+    }
+    40%, 80% {
+        transform: translateX(5px);
+    }
 }
 
 .final-score {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 2.5rem;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    color: #8BC34A;
+    padding: 15px 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 40px;
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .game-start-animation {
-    animation: gameStart 0.5s ease forwards;
+    animation: gameStart 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
 }
 
 @keyframes gameStart {
     0% {
-        transform: scale(0.95);
-        opacity: 0.7;
+        transform: scale(0.8) rotate(-2deg);
+        opacity: 0.5;
+        filter: blur(2px);
     }
     100% {
-        transform: scale(1);
+        transform: scale(1) rotate(0);
         opacity: 1;
+        filter: blur(0);
+    }
+}
+
+/* 爆炸粒子动画 */
+.explosion-particle {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: rgba(255, 82, 82, 0.8);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 11;
+    animation: explode 1s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes explode {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0) translate(var(--tx), var(--ty));
     }
 }

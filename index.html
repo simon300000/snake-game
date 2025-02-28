@@ -14,14 +14,39 @@
             <button id="start-btn">开始游戏</button>
         </div>
         <div class="svg-container">
+            <div class="corner-decoration"></div>
             <svg id="game-svg" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-                <!-- 为蛇身体添加渐变色 -->
+                <!-- 为游戏元素添加渐变色 -->
                 <defs>
-                    <linearGradient id="snake-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <!-- 蛇身体渐变 -->
+                    <linearGradient id="snake-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="#4CAF50" />
+                        <stop offset="50%" stop-color="#7CB342" />
                         <stop offset="100%" stop-color="#8BC34A" />
+                        <animate attributeName="x1" values="0%;100%;0%" dur="10s" repeatCount="indefinite" />
+                        <animate attributeName="y1" values="0%;100%;0%" dur="10s" repeatCount="indefinite" />
                     </linearGradient>
+                    
+                    <!-- 蛇头部渐变 -->
+                    <radialGradient id="snake-head-gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                        <stop offset="0%" stop-color="#43A047" />
+                        <stop offset="80%" stop-color="#388E3C" />
+                        <stop offset="100%" stop-color="#2E7D32" />
+                    </radialGradient>
+                    
+                    <!-- 食物渐变 -->
+                    <radialGradient id="food-gradient" cx="30%" cy="30%" r="70%" fx="20%" fy="20%">
+                        <stop offset="0%" stop-color="#FF8A80" />
+                        <stop offset="70%" stop-color="#FF5252" />
+                        <stop offset="100%" stop-color="#D50000" />
+                    </radialGradient>
                 </defs>
+                
+                <!-- 游戏区域网格背景 -->
+                <pattern id="grid-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <rect width="20" height="20" fill="none" stroke="rgba(76, 175, 80, 0.1)" stroke-width="0.5"/>
+                </pattern>
+                <rect width="400" height="400" fill="url(#grid-pattern)" />
             </svg>
             <div class="game-over-overlay" id="game-over-overlay">
                 <div class="game-over-text">游戏结束!</div>
