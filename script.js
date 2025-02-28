@@ -23,16 +23,75 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let gameSpeed = 150; // 移动速度（毫秒）
     let gameInterval;
-    let backgroundColors = [
-        'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
-        'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
-        'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
-        'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
-    ];
+    
+    // 游戏设置
+    const gameSettings = {
+        speed: 150,
+        showParticles: true,
+        showBackgroundAnimation: true,
+        colorTheme: 'green'
+    };
+    
+    // 颜色主题
+    const colorThemes = {
+        green: {
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            gameBg: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)',
+            snakeGradient: {
+                stop1: '#4CAF50',
+                stop2: '#7CB342',
+                stop3: '#8BC34A'
+            },
+            borderColor: 'rgba(76, 175, 80, 0.7)',
+            buttonGradient: 'linear-gradient(45deg, #4CAF50, #8BC34A)'
+        },
+        blue: {
+            background: 'linear-gradient(135deg, #e0f7fa 0%, #80deea 100%)',
+            gameBg: 'linear-gradient(135deg, #e3f2fd, #bbdefb)',
+            snakeGradient: {
+                stop1: '#2196F3',
+                stop2: '#42A5F5',
+                stop3: '#64B5F6'
+            },
+            borderColor: 'rgba(33, 150, 243, 0.7)',
+            buttonGradient: 'linear-gradient(45deg, #1976D2, #42A5F5)'
+        },
+        purple: {
+            background: 'linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%)',
+            gameBg: 'linear-gradient(135deg, #f3e5f5, #e1bee7)',
+            snakeGradient: {
+                stop1: '#9C27B0',
+                stop2: '#AB47BC',
+                stop3: '#BA68C8'
+            },
+            borderColor: 'rgba(156, 39, 176, 0.7)',
+            buttonGradient: 'linear-gradient(45deg, #7B1FA2, #AB47BC)'
+        },
+        orange: {
+            background: 'linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%)',
+            gameBg: 'linear-gradient(135deg, #fff3e0, #ffe0b2)',
+            snakeGradient: {
+                stop1: '#FF9800',
+                stop2: '#FFA726',
+                stop3: '#FFB74D'
+            },
+            borderColor: 'rgba(255, 152, 0, 0.7)',
+            buttonGradient: 'linear-gradient(45deg, #F57C00, #FFA726)'
+        }
+    };
     
     const startBtn = document.getElementById('start-btn');
     const pauseBtn = document.getElementById('pause-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+    const settingsOverlay = document.getElementById('settings-overlay');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const resetSettingsBtn = document.getElementById('reset-settings-btn');
+    const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+    const colorBtns = document.querySelectorAll('.color-btn');
+    const particlesToggle = document.getElementById('particles-toggle');
+    const bgAnimationToggle = document.getElementById('bg-animation-toggle');
     
     // 初始化游戏
     function initGame() {
@@ -117,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 开始游戏循环
         gameRunning = true;
-        gameInterval = setInterval(gameLoop, gameSpeed);
+        gameInterval = setInterval(gameLoop, gameSettings.speed);
         
         // 更新按钮状态
         startBtn.textContent = '重新开始';
@@ -230,6 +289,45 @@ document.addEventListener('DOMContentLoaded', () => {
             foodGradient.appendChild(foodStop2);
             foodGradient.appendChild(foodStop3);
             defs.appendChild(foodGradient);
+        }
+
+        // 更新蛇的渐变颜色
+        updateSnakeGradient();
+    }
+
+    // 更新蛇的渐变颜色
+    function updateSnakeGradient() {
+        const theme = colorThemes[gameSettings.colorTheme];
+        const snakeGradient = document.getElementById('snake-gradient');
+        
+        if (snakeGradient) {
+            const stops = snakeGradient.querySelectorAll('stop');
+            if (stops.length >= 3) {
+                stops[0].setAttribute('stop-color', theme.snakeGradient.stop1);
+                stops[1].setAttribute('stop-color', theme.snakeGradient.stop2);
+                stops[2].setAttribute('stop-color', theme.snakeGradient.stop3);
+            }
+        }
+        
+        // 更新SVG背景和边框
+        svg.style.background = theme.gameBg;
+        svg.style.borderColor = theme.borderColor;
+        
+        // 更新按钮样式
+        const buttons = document.querySelectorAll('#start-btn, #pause-btn, #settings-btn');
+        buttons.forEach(button => {
+            button.style.background = theme.buttonGradient;
+        });
+        
+        // 更新头部渐变
+        const headGradient = document.getElementById('snake-head-gradient');
+        if (headGradient) {
+            const headStops = headGradient.querySelectorAll('stop');
+            if (headStops.length >= 3) {
+                headStops[0].setAttribute('stop-color', theme.snakeGradient.stop1);
+                headStops[1].setAttribute('stop-color', theme.snakeGradient.stop2);
+                headStops[2].setAttribute('stop-color', theme.snakeGradient.stop3);
+            }
         }
     }
     
@@ -395,6 +493,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 创建分数增加时的粒子效果
     function createScoreParticles() {
+        if (!gameSettings.showParticles) return;
+        
         const scorePos = scoreElement.getBoundingClientRect();
         const foodPos = foodElement.getBoundingClientRect();
         
@@ -428,6 +528,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 创建游戏结束时的爆炸效果
     function createExplosionEffect(x, y) {
+        if (!gameSettings.showParticles) return;
+        
         // 创建多个爆炸粒子
         for (let i = 0; i < 30; i++) {
             const particle = document.createElement('div');
@@ -542,6 +644,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // 切换背景动画
+    function toggleBackgroundAnimation(enabled) {
+        if (enabled) {
+            document.body.classList.remove('no-bg-animation');
+        } else {
+            document.body.classList.add('no-bg-animation');
+        }
+    }
+    
+    // 应用颜色主题
+    function applyColorTheme(theme) {
+        const themeColors = colorThemes[theme];
+        document.body.style.background = themeColors.background;
+        updateSnakeGradient();
+    }
+    
+    // 打开设置面板
+    function openSettings() {
+        settingsPanel.classList.add('active');
+        settingsOverlay.classList.add('active');
+        
+        // 如果游戏正在运行，暂停游戏
+        if (gameRunning && !gamePaused) {
+            pauseGame();
+        }
+        
+        // 更新设置界面显示当前设置
+        updateSettingsUI();
+    }
+    
+    // 关闭设置面板
+    function closeSettings() {
+        settingsPanel.classList.remove('active');
+        settingsOverlay.classList.remove('active');
+    }
+    
+    // 更新设置 UI 以匹配当前设置
+    function updateSettingsUI() {
+        // 更新难度按钮
+        difficultyBtns.forEach(btn => {
+            if (parseInt(btn.dataset.speed) === gameSettings.speed) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // 更新颜色主题按钮
+        colorBtns.forEach(btn => {
+            if (btn.dataset.color === gameSettings.colorTheme) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // 更新开关
+        particlesToggle.checked = gameSettings.showParticles;
+        bgAnimationToggle.checked = gameSettings.showBackgroundAnimation;
+    }
+    
+    // 保存设置
+    function saveSettings() {
+        // 应用速度设置
+        if (gameInterval && gameSettings.speed !== gameSpeed) {
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, gameSettings.speed);
+        }
+        
+        // 应用颜色主题
+        applyColorTheme(gameSettings.colorTheme);
+        
+        // 应用动画设置
+        toggleBackgroundAnimation(gameSettings.showBackgroundAnimation);
+        
+        // 关闭设置面板
+        closeSettings();
+    }
+    
+    // 重置默认设置
+    function resetDefaultSettings() {
+        gameSettings.speed = 150;
+        gameSettings.showParticles = true;
+        gameSettings.showBackgroundAnimation = true;
+        gameSettings.colorTheme = 'green';
+        
+        updateSettingsUI();
+    }
+    
     // 监听按键事件
     document.addEventListener('keydown', (event) => {
         if (!gameRunning) return;
@@ -569,9 +760,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // 开始/重新开始按钮点击事件
-    startBtn.addEventListener('click', initGame);
+    // 设置面板事件监听
+    difficultyBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            difficultyBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            gameSettings.speed = parseInt(btn.dataset.speed);
+        });
+    });
     
-    // 暂停按钮点击事件
+    colorBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            colorBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            gameSettings.colorTheme = btn.dataset.color;
+        });
+    });
+    
+    particlesToggle.addEventListener('change', () => {
+        gameSettings.showParticles = particlesToggle.checked;
+    });
+    
+    bgAnimationToggle.addEventListener('change', () => {
+        gameSettings.showBackgroundAnimation = bgAnimationToggle.checked;
+    });
+    
+    // 按钮点击事件
+    startBtn.addEventListener('click', initGame);
     pauseBtn.addEventListener('click', pauseGame);
+    settingsBtn.addEventListener('click', openSettings);
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    saveSettingsBtn.addEventListener('click', saveSettings);
+    resetSettingsBtn.addEventListener('click', resetDefaultSettings);
+    settingsOverlay.addEventListener('click', closeSettings);
+    
+    // 初始化时应用主题
+    toggleBackgroundAnimation(gameSettings.showBackgroundAnimation);
 });

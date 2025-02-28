@@ -14,6 +14,7 @@
             <div class="control-buttons">
                 <button id="start-btn">开始游戏</button>
                 <button id="pause-btn" disabled>暂停</button>
+                <button id="settings-btn">设置</button>
             </div>
         </div>
         <div class="svg-container">
@@ -68,6 +69,59 @@
             <p>空格键或暂停按钮可暂停/继续游戏</p>
         </div>
     </div>
+
+    <!-- 设置面板 -->
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-header">
+            <h2>游戏设置</h2>
+            <button id="close-settings-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-group">
+                <label>游戏难度</label>
+                <div class="difficulty-settings">
+                    <button class="difficulty-btn" data-speed="200">简单</button>
+                    <button class="difficulty-btn active" data-speed="150">中等</button>
+                    <button class="difficulty-btn" data-speed="100">困难</button>
+                    <button class="difficulty-btn" data-speed="70">极难</button>
+                </div>
+            </div>
+            <div class="settings-group">
+                <label>背景颜色主题</label>
+                <div class="color-settings">
+                    <button class="color-btn active" data-color="green">绿色</button>
+                    <button class="color-btn" data-color="blue">蓝色</button>
+                    <button class="color-btn" data-color="purple">紫色</button>
+                    <button class="color-btn" data-color="orange">橙色</button>
+                </div>
+            </div>
+            <div class="settings-group">
+                <label>视觉效果</label>
+                <div class="effects-settings">
+                    <div class="toggle-setting">
+                        <span>粒子效果</span>
+                        <label class="switch">
+                            <input type="checkbox" id="particles-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-setting">
+                        <span>背景动画</span>
+                        <label class="switch">
+                            <input type="checkbox" id="bg-animation-toggle" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="settings-footer">
+            <button id="save-settings-btn">保存设置</button>
+            <button id="reset-settings-btn">重置默认</button>
+        </div>
+    </div>
+    <div class="overlay" id="settings-overlay"></div>
+    
     <script src="script.js"></script>
 </body>
 </html>
