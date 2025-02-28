@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 获取SVG元素和命名空间
     const svg = document.getElementById('game-svg');
     const svgNS = "http://www.w3.org/2000/svg";
+    const gameContainer = document.querySelector('.game-container');
+    const scoreElement = document.getElementById('score');
+    const gameOverOverlay = document.getElementById('game-over-overlay');
+    const finalScoreElement = document.getElementById('final-score');
     
     // 游戏参数
     const gridSize = 20;
@@ -17,9 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let gameSpeed = 150; // 移动速度（毫秒）
     let gameInterval;
+    let backgroundColors = [
+        'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+        'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+        'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+        'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)'
+    ];
     
     const startBtn = document.getElementById('start-btn');
-    const scoreDisplay = document.getElementById('score');
     
     // 初始化游戏
     function initGame() {
@@ -29,10 +39,35 @@ document.addEventListener('DOMContentLoaded', () => {
             gameInterval = null;
         }
         
+        // 隐藏游戏结束覆盖层
+        gameOverOverlay.classList.remove('visible');
+        
         // 清除SVG中的所有元素
         while (svg.firstChild) {
             svg.removeChild(svg.firstChild);
         }
+        
+        // 重新添加渐变定义
+        const defs = document.createElementNS(svgNS, 'defs');
+        const linearGradient = document.createElementNS(svgNS, 'linearGradient');
+        linearGradient.setAttribute('id', 'snake-gradient');
+        linearGradient.setAttribute('x1', '0%');
+        linearGradient.setAttribute('y1', '0%');
+        linearGradient.setAttribute('x2', '100%');
+        linearGradient.setAttribute('y2', '0%');
+        
+        const stop1 = document.createElementNS(svgNS, 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', '#4CAF50');
+        
+        const stop2 = document.createElementNS(svgNS, 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('stop-color', '#8BC34A');
+        
+        linearGradient.appendChild(stop1);
+        linearGradient.appendChild(stop2);
+        defs.appendChild(linearGradient);
+        svg.appendChild(defs);
         
         // 清空数组和变量
         snake = [];
@@ -53,16 +88,27 @@ document.addEventListener('DOMContentLoaded', () => {
             rect.setAttribute('y', segment.y * gridSize);
             rect.setAttribute('width', gridSize);
             rect.setAttribute('height', gridSize);
-            rect.setAttribute('class', index === 0 ? 'snake-head' : 'snake-body');
+            
+            if (index === 0) {
+                rect.setAttribute('class', 'snake-head');
+            } else {
+                rect.setAttribute('class', 'snake-body snake-body-gradient');
+            }
             
             svg.appendChild(rect);
             snakeElements.push(rect);
         });
         
+        // 添加游戏开始动画
+        svg.classList.add('game-start-animation');
+        setTimeout(() => {
+            svg.classList.remove('game-start-animation');
+        }, 500);
+        
         // 重置状态
         direction = 'right';
         score = 0;
-        scoreDisplay.textContent = score;
+        scoreElement.textContent = score;
         
         // 生成第一个食物
         createNewFood();
@@ -144,10 +190,27 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 检查是否吃到食物
         if (head.x === food.x && head.y === food.y) {
+            // 吃到食物动画效果
+            foodElement.classList.add('food-eaten');
+            
             // 吃到食物，加分并生成新食物
             score += 10;
-            scoreDisplay.textContent = score;
-            createNewFood();
+            scoreElement.textContent = score;
+            
+            // 分数动画效果
+            scoreElement.parentElement.classList.add('score-up');
+            setTimeout(() => {
+                scoreElement.parentElement.classList.remove('score-up');
+            }, 300);
+            
+            // 改变背景颜色
+            if (score % 50 === 0) {
+                const newBackground = backgroundColors[Math.floor(score / 50) % backgroundColors.length];
+                document.body.style.background = newBackground;
+            }
+            
+            // 生成新食物
+            setTimeout(createNewFood, 300);
             
             // 创建新的头部SVG元素
             const newHeadElement = document.createElementNS(svgNS, 'rect');
@@ -159,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 原来的头部变成身体
             if (snakeElements.length > 0) {
-                snakeElements[0].setAttribute('class', 'snake-body');
+                snakeElements[0].setAttribute('class', 'snake-body snake-body-gradient');
             }
             
             // 添加新的头部元素
@@ -172,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 原来的头部变成身体
             if (snakeElements.length > 0) {
-                snakeElements[0].setAttribute('class', 'snake-body');
+                snakeElements[0].setAttribute('class', 'snake-body snake-body-gradient');
             }
             
             // 移除尾部元素
@@ -239,7 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
         gameRunning = false;
         clearInterval(gameInterval);
         gameInterval = null;
-        alert(`游戏结束! 你的分数: ${score}`);
+        
+        // 显示游戏结束覆盖层
+        finalScoreElement.textContent = score;
+        gameOverOverlay.classList.add('visible');
     }
     
     // 监听按键事件

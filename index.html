@@ -14,7 +14,19 @@
             <button id="start-btn">开始游戏</button>
         </div>
         <div class="svg-container">
-            <svg id="game-svg" width="400" height="400" xmlns="http://www.w3.org/2000/svg"></svg>
+            <svg id="game-svg" width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+                <!-- 为蛇身体添加渐变色 -->
+                <defs>
+                    <linearGradient id="snake-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#4CAF50" />
+                        <stop offset="100%" stop-color="#8BC34A" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="game-over-overlay" id="game-over-overlay">
+                <div class="game-over-text">游戏结束!</div>
+                <div class="final-score">最终分数: <span id="final-score">0</span></div>
+            </div>
         </div>
         <div class="instructions">
             <h2>游戏说明</h2>
