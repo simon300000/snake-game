@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverOverlay = document.getElementById('game-over-overlay');
     const pauseOverlay = document.getElementById('pause-overlay');
     const finalScoreElement = document.getElementById('final-score');
+    const highScoreElement = document.getElementById('high-score');
     
     // 游戏参数
     const gridSize = 20;
@@ -17,12 +18,58 @@ document.addEventListener('DOMContentLoaded', () => {
     let snakeElements = []; // 存储蛇身体的SVG元素
     let food = {};
     let foodElement = null; // 存储食物的SVG元素
+    let powerUp = {};
+    let powerUpElement = null; // 存储能力道具的SVG元素
+    let activePowerUp = null; // 当前激活的能力
+    let powerUpTimer = null; // 能力持续时间计时器
+    let powerUpSpawnTimer = null; // 能力道具生成计时器
     let direction = 'right';
     let gameRunning = false;
     let gamePaused = false;
     let score = 0;
+    let highScore = localStorage.getItem('snakeHighScore') || 0;
     let gameSpeed = 150; // 移动速度（毫秒）
     let gameInterval;
+    
+    // 定义不同类型的能力道具
+    const powerUpTypes = {
+        speedBoost: {
+            name: '加速',
+            color: '#2196F3',
+            duration: 5000, // 持续5秒
+            effect: () => {
+                const originalSpeed = gameSettings.speed;
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, gameSettings.speed / 2);
+                return () => {
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(gameLoop, originalSpeed);
+                };
+            }
+        },
+        invincible: {
+            name: '无敌',
+            color: '#FFC107',
+            duration: 7000, // 持续7秒
+            effect: () => {
+                const originalCheckCollision = checkCollision;
+                checkCollision = () => {};
+                return () => {
+                    checkCollision = originalCheckCollision;
+                };
+            }
+        },
+        doublePoints: {
+            name: '双倍分数',
+            color: '#E91E63',
+            duration: 10000, // 持续10秒
+            effect: () => {
+                const originalScoreMultiplier = 1;
+                const scoreMultiplier = 2;
+                return () => {};
+            }
+        }
+    };
     
     // 游戏设置
     const gameSettings = {
@@ -31,6 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
         showBackgroundAnimation: true,
         colorTheme: 'green'
     };
+    
+    // 背景颜色变化
+    const backgroundColors = [
+        'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        'linear-gradient(135deg, #e0f7fa 0%, #80deea 100%)',
+        'linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%)',
+        'linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%)',
+        'linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%)'
+    ];
     
     // 颜色主题
     const colorThemes = {
@@ -101,6 +157,20 @@ document.addEventListener('DOMContentLoaded', () => {
             gameInterval = null;
         }
         
+        // 清除能力道具计时器
+        if (powerUpTimer) {
+            clearTimeout(powerUpTimer);
+            powerUpTimer = null;
+        }
+        
+        if (powerUpSpawnTimer) {
+            clearTimeout(powerUpSpawnTimer);
+            powerUpSpawnTimer = null;
+        }
+        
+        // 重置激活的能力
+        activePowerUp = null;
+        
         // 隐藏游戏结束覆盖层和暂停覆盖层
         gameOverOverlay.classList.remove('visible');
         pauseOverlay.classList.remove('visible');
@@ -120,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         snake = [];
         snakeElements = [];
         foodElement = null;
+        powerUpElement = null;
         gamePaused = false;
         
         // 初始化蛇的位置（中间三格）
@@ -170,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
         direction = 'right';
         score = 0;
         scoreElement.textContent = score;
+        highScoreElement.textContent = highScore;
         
         // 生成第一个食物
         createNewFood();
@@ -178,10 +250,158 @@ document.addEventListener('DOMContentLoaded', () => {
         gameRunning = true;
         gameInterval = setInterval(gameLoop, gameSettings.speed);
         
+        // 设置生成能力道具的定时器
+        schedulePowerUpSpawn();
+        
         // 更新按钮状态
         startBtn.textContent = '重新开始';
         pauseBtn.disabled = false;
         pauseBtn.textContent = '暂停';
+    }
+    
+    // 安排生成能力道具
+    function schedulePowerUpSpawn() {
+        // 随机15-30秒后生成能力道具
+        const spawnTime = Math.random() * 15000 + 15000;
+        powerUpSpawnTimer = setTimeout(() => {
+            createPowerUp();
+            // 能力道具存在10秒后消失
+            setTimeout(() => {
+                if (powerUpElement && powerUpElement.parentNode) {
+                    powerUpElement.parentNode.removeChild(powerUpElement);
+                    powerUpElement = null;
+                }
+                schedulePowerUpSpawn();
+            }, 10000);
+        }, spawnTime);
+    }
+    
+    // 创建能力道具
+    function createPowerUp() {
+        // 如果当前已有能力道具，先移除
+        if (powerUpElement && powerUpElement.parentNode) {
+            powerUpElement.parentNode.removeChild(powerUpElement);
+        }
+        
+        // 在随机位置生成能力道具
+        let validPosition = false;
+        let newPowerUp = {};
+        
+        // 循环直到找到一个有效的位置
+        while (!validPosition) {
+            newPowerUp = {
+                x: Math.floor(Math.random() * gridWidth),
+                y: Math.floor(Math.random() * gridHeight),
+                type: Object.keys(powerUpTypes)[Math.floor(Math.random() * Object.keys(powerUpTypes).length)]
+            };
+            
+            // 检查是否与蛇身体或食物重叠
+            validPosition = true;
+            
+            // 检查与蛇身体
+            for (let segment of snake) {
+                if (segment.x === newPowerUp.x && segment.y === newPowerUp.y) {
+                    validPosition = false;
+                    break;
+                }
+            }
+            
+            // 检查与食物
+            if (validPosition && food.x === newPowerUp.x && food.y === newPowerUp.y) {
+                validPosition = false;
+            }
+        }
+        
+        // 保存新能力道具位置
+        powerUp = newPowerUp;
+        
+        // 创建能力道具元素
+        powerUpElement = document.createElementNS(svgNS, 'rect');
+        powerUpElement.setAttribute('x', powerUp.x * gridSize);
+        powerUpElement.setAttribute('y', powerUp.y * gridSize);
+        powerUpElement.setAttribute('width', gridSize);
+        powerUpElement.setAttribute('height', gridSize);
+        powerUpElement.setAttribute('rx', '10');
+        powerUpElement.setAttribute('ry', '10');
+        powerUpElement.setAttribute('fill', powerUpTypes[powerUp.type].color);
+        powerUpElement.setAttribute('class', 'power-up');
+        
+        // 添加闪烁动画
+        const animate = document.createElementNS(svgNS, 'animate');
+        animate.setAttribute('attributeName', 'opacity');
+        animate.setAttribute('values', '1;0.5;1');
+        animate.setAttribute('dur', '1.5s');
+        animate.setAttribute('repeatCount', 'indefinite');
+        powerUpElement.appendChild(animate);
+        
+        svg.appendChild(powerUpElement);
+    }
+    
+    // 激活能力道具
+    function activatePowerUp(type) {
+        // 如果已有激活的能力，先清除它
+        if (activePowerUp && powerUpTimer) {
+            clearTimeout(powerUpTimer);
+            activePowerUp.cleanup();
+        }
+        
+        // 获取能力道具配置
+        const powerUpConfig = powerUpTypes[type];
+        
+        // 显示能力道具效果提示
+        showPowerUpNotification(powerUpConfig.name);
+        
+        // 激活能力效果并保存清理函数
+        const cleanup = powerUpConfig.effect();
+        activePowerUp = {
+            type,
+            cleanup
+        };
+        
+        // 设置能力持续时间
+        powerUpTimer = setTimeout(() => {
+            if (activePowerUp) {
+                activePowerUp.cleanup();
+                activePowerUp = null;
+                showPowerUpEndNotification(powerUpConfig.name);
+            }
+        }, powerUpConfig.duration);
+    }
+    
+    // 显示能力道具激活提示
+    function showPowerUpNotification(name) {
+        const notification = document.createElement('div');
+        notification.className = 'power-up-notification';
+        notification.textContent = `能力道具: ${name} 激活!`;
+        notification.style.backgroundColor = powerUpTypes[Object.keys(powerUpTypes).find(key => powerUpTypes[key].name === name)].color;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 2000);
+    }
+    
+    // 显示能力道具结束提示
+    function showPowerUpEndNotification(name) {
+        const notification = document.createElement('div');
+        notification.className = 'power-up-notification end';
+        notification.textContent = `能力道具: ${name} 已结束`;
+        notification.style.backgroundColor = '#9E9E9E';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 1500);
     }
     
     // 确保渐变定义存在
@@ -425,7 +645,13 @@ document.addEventListener('DOMContentLoaded', () => {
             createScoreParticles();
             
             // 吃到食物，加分并生成新食物
-            score += 10;
+            let points = 10;
+            // 如果有双倍分数能力，分数翻倍
+            if (activePowerUp && activePowerUp.type === 'doublePoints') {
+                points *= 2;
+            }
+            
+            score += points;
             scoreElement.textContent = score;
             
             // 分数动画效果
@@ -461,6 +687,45 @@ document.addEventListener('DOMContentLoaded', () => {
             // 添加新的头部元素
             svg.appendChild(newHeadElement);
             snakeElements.unshift(newHeadElement);
+            
+        } else if (powerUpElement && head.x === powerUp.x && head.y === powerUp.y) {
+            // 吃到能力道具
+            
+            // 创建特殊效果
+            createPowerUpEffect(head.x, head.y, powerUp.type);
+            
+            // 激活能力
+            activatePowerUp(powerUp.type);
+            
+            // 移除能力道具元素
+            if (powerUpElement && powerUpElement.parentNode) {
+                powerUpElement.parentNode.removeChild(powerUpElement);
+                powerUpElement = null;
+            }
+            
+            // 创建新的头部SVG元素
+            const newHeadElement = document.createElementNS(svgNS, 'rect');
+            newHeadElement.setAttribute('x', head.x * gridSize);
+            newHeadElement.setAttribute('y', head.y * gridSize);
+            newHeadElement.setAttribute('width', gridSize);
+            newHeadElement.setAttribute('height', gridSize);
+            newHeadElement.setAttribute('class', 'snake-head');
+            
+            // 原来的头部变成身体
+            if (snakeElements.length > 0) {
+                snakeElements[0].setAttribute('class', 'snake-body snake-body-gradient');
+            }
+            
+            // 添加新的头部元素
+            svg.appendChild(newHeadElement);
+            snakeElements.unshift(newHeadElement);
+            
+            // 移除尾部
+            snake.pop();
+            const tailElement = snakeElements.pop();
+            if (tailElement && tailElement.parentNode) {
+                tailElement.parentNode.removeChild(tailElement);
+            }
             
         } else {
             // 没吃到食物，移除尾部
@@ -502,7 +767,15 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < 10; i++) {
             const particle = document.createElement('div');
             particle.className = 'score-particle';
-            particle.textContent = '+1';
+            
+            // 如果有双倍分数能力，显示+2
+            if (activePowerUp && activePowerUp.type === 'doublePoints') {
+                particle.textContent = '+2';
+                particle.classList.add('double-points');
+            } else {
+                particle.textContent = '+1';
+            }
+            
             particle.style.left = `${foodPos.left + foodPos.width / 2}px`;
             particle.style.top = `${foodPos.top + foodPos.height / 2}px`;
             
@@ -521,6 +794,65 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 if (particle.parentNode) {
                     document.body.removeChild(particle);
+                }
+            }, duration * 1000);
+        }
+    }
+    
+    // 创建能力道具激活时的粒子效果
+    function createPowerUpEffect(x, y, type) {
+        if (!gameSettings.showParticles) return;
+        
+        const powerUpPos = {
+            left: x * gridSize,
+            top: y * gridSize,
+            width: gridSize,
+            height: gridSize
+        };
+        
+        // 创建闪光效果
+        const flash = document.createElement('div');
+        flash.className = 'power-up-flash';
+        flash.style.left = `${powerUpPos.left}px`;
+        flash.style.top = `${powerUpPos.top}px`;
+        flash.style.width = `${powerUpPos.width * 2}px`;
+        flash.style.height = `${powerUpPos.height * 2}px`;
+        flash.style.backgroundColor = powerUpTypes[type].color;
+        document.querySelector('.svg-container').appendChild(flash);
+        
+        // 闪光结束后移除
+        setTimeout(() => {
+            if (flash.parentNode) {
+                flash.parentNode.removeChild(flash);
+            }
+        }, 1000);
+        
+        // 创建爆炸粒子
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'power-up-particle';
+            particle.style.left = `${powerUpPos.left + powerUpPos.width / 2}px`;
+            particle.style.top = `${powerUpPos.top + powerUpPos.height / 2}px`;
+            particle.style.backgroundColor = powerUpTypes[type].color;
+            
+            // 设置随机轨迹
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 80 + 40;
+            const duration = Math.random() * 0.8 + 0.6;
+            const size = Math.random() * 8 + 4;
+            
+            particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+            particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.animationDuration = `${duration}s`;
+            
+            document.querySelector('.svg-container').appendChild(particle);
+            
+            // 动画结束后移除粒子
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
                 }
             }, duration * 1000);
         }
@@ -618,6 +950,19 @@ document.addEventListener('DOMContentLoaded', () => {
         gamePaused = false;
         clearInterval(gameInterval);
         gameInterval = null;
+        
+        // 检查是否有新的高分
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('snakeHighScore', highScore);
+            highScoreElement.textContent = highScore;
+            
+            // 增加一个高分动画显示
+            highScoreElement.parentElement.classList.add('new-high-score');
+            setTimeout(() => {
+                highScoreElement.parentElement.classList.remove('new-high-score');
+            }, 3000);
+        }
         
         // 显示游戏结束覆盖层
         finalScoreElement.textContent = score;
@@ -759,6 +1104,110 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
     });
+    
+    // 添加移动设备触摸控制
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    
+    // 创建触摸控制按钮
+    function createTouchControls() {
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'touch-controls';
+        
+        const directions = ['up', 'down', 'left', 'right'];
+        const arrowSymbols = {
+            'up': '↑',
+            'down': '↓',
+            'left': '←',
+            'right': '→'
+        };
+        
+        directions.forEach(dir => {
+            const button = document.createElement('button');
+            button.className = `touch-btn touch-btn-${dir}`;
+            button.textContent = arrowSymbols[dir];
+            
+            button.addEventListener('click', () => {
+                if (!gameRunning || gamePaused) return;
+                
+                switch(dir) {
+                    case 'up':
+                        if (direction !== 'down') direction = 'up';
+                        break;
+                    case 'down':
+                        if (direction !== 'up') direction = 'down';
+                        break;
+                    case 'left':
+                        if (direction !== 'right') direction = 'left';
+                        break;
+                    case 'right':
+                        if (direction !== 'left') direction = 'right';
+                        break;
+                }
+            });
+            
+            controlsContainer.appendChild(button);
+        });
+        
+        document.body.appendChild(controlsContainer);
+    }
+    
+    // 检测是否为移动设备
+    function isMobileDevice() {
+        return (
+            typeof window.orientation !== 'undefined' ||
+            navigator.userAgent.indexOf('IEMobile') !== -1 ||
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        );
+    }
+    
+    // 如果是移动设备，则添加触摸控制
+    if (isMobileDevice()) {
+        createTouchControls();
+    }
+    
+    // 添加触摸滑动事件
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        if (!gameRunning || gamePaused) return;
+        
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+        
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const xDiff = touchStartX - touchEndX;
+        const yDiff = touchStartY - touchEndY;
+        
+        // 确定主要的滑动方向 (水平或垂直)
+        if (Math.abs(xDiff) > Math.abs(yDiff)) {
+            // 水平滑动
+            if (xDiff > 20) {
+                // 向左滑动
+                if (direction !== 'right') direction = 'left';
+            } else if (xDiff < -20) {
+                // 向右滑动
+                if (direction !== 'left') direction = 'right';
+            }
+        } else {
+            // 垂直滑动
+            if (yDiff > 20) {
+                // 向上滑动
+                if (direction !== 'down') direction = 'up';
+            } else if (yDiff < -20) {
+                // 向下滑动
+                if (direction !== 'up') direction = 'down';
+            }
+        }
+    }
     
     // 设置面板事件监听
     difficultyBtns.forEach(btn => {

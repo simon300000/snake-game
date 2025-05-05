@@ -10,7 +10,10 @@
     <div class="game-container">
         <h1>贪吃蛇游戏</h1>
         <div class="game-info">
-            <div class="score">分数: <span id="score">0</span></div>
+            <div class="score-container">
+                <div class="score">分数: <span id="score">0</span></div>
+                <div class="score">最高分: <span id="high-score">0</span></div>
+            </div>
             <div class="control-buttons">
                 <button id="start-btn">开始游戏</button>
                 <button id="pause-btn" disabled>暂停</button>
@@ -64,9 +67,23 @@
         <div class="instructions">
             <h2>游戏说明</h2>
             <p>使用方向键 ↑ ↓ ← → 控制蛇的移动方向</p>
+            <p>在移动设备上可以滑动屏幕或使用触摸按钮控制</p>
             <p>吃到食物会增加分数和蛇的长度</p>
             <p>撞到墙壁或自己会结束游戏</p>
             <p>空格键或暂停按钮可暂停/继续游戏</p>
+            <p>游戏中会随机出现特殊能力道具:</p>
+            <div class="power-up-info">
+                <div class="power-up-icon" style="background-color: #2196F3;"></div>
+                <span>加速: 增加蛇的移动速度</span>
+            </div>
+            <div class="power-up-info">
+                <div class="power-up-icon" style="background-color: #FFC107;"></div>
+                <span>无敌: 暂时不会因撞墙或撞到自己而死亡</span>
+            </div>
+            <div class="power-up-info">
+                <div class="power-up-icon" style="background-color: #E91E63;"></div>
+                <span>双倍分数: 吃到食物获得双倍分数</span>
+            </div>
         </div>
     </div>
 
