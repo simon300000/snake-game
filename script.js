@@ -72,13 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // 游戏设置
-    const gameSettings = {
+    let gameSettings = {
         speed: 150,
         showParticles: true,
         showBackgroundAnimation: true,
         colorTheme: 'green',
         teleportEnabled: false   // 边界传送功能
     };
+    
+    // 从localStorage加载保存的设置
+    const savedSettings = localStorage.getItem('snakeGameSettings');
+    if (savedSettings) {
+        gameSettings = JSON.parse(savedSettings);
+    }
     
     // 背景颜色变化
     const backgroundColors = [
@@ -1148,6 +1154,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 应用动画设置
         toggleBackgroundAnimation(gameSettings.showBackgroundAnimation);
         
+        // 保存设置到localStorage
+        localStorage.setItem('snakeGameSettings', JSON.stringify(gameSettings));
+        
         // 关闭设置面板
         closeSettings();
     }
@@ -1159,6 +1168,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gameSettings.showBackgroundAnimation = true;
         gameSettings.colorTheme = 'green';
         gameSettings.teleportEnabled = false;
+        
+        // 从localStorage中清除保存的设置
+        localStorage.removeItem('snakeGameSettings');
         
         updateSettingsUI();
     }
@@ -1332,6 +1344,8 @@ document.addEventListener('DOMContentLoaded', () => {
     resetSettingsBtn.addEventListener('click', resetDefaultSettings);
     settingsOverlay.addEventListener('click', closeSettings);
     
-    // 初始化时应用主题
+    // 初始化时应用设置
     toggleBackgroundAnimation(gameSettings.showBackgroundAnimation);
+    applyColorTheme(gameSettings.colorTheme);
+    updateSettingsUI();
 });
