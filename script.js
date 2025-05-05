@@ -76,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
         speed: 150,
         showParticles: true,
         showBackgroundAnimation: true,
-        colorTheme: 'green'
+        colorTheme: 'green',
+        teleportEnabled: false   // 边界传送功能
     };
     
     // 背景颜色变化
@@ -148,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const colorBtns = document.querySelectorAll('.color-btn');
     const particlesToggle = document.getElementById('particles-toggle');
     const bgAnimationToggle = document.getElementById('bg-animation-toggle');
+    const teleportToggle = document.getElementById('teleport-toggle');
     
     // 初始化游戏
     function initGame() {
@@ -929,9 +931,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 检查是否撞墙
         if (head.x < 0 || head.x >= gridWidth || head.y < 0 || head.y >= gridHeight) {
-            createExplosionEffect(head.x, head.y);
-            gameOver();
-            return;
+            if (gameSettings.teleportEnabled) {
+                // 传送到对面边界
+                if (head.x < 0) {
+                    snake[0].x = gridWidth - 1;
+                } else if (head.x >= gridWidth) {
+                    snake[0].x = 0;
+                }
+                
+                if (head.y < 0) {
+                    snake[0].y = gridHeight - 1;
+                } else if (head.y >= gridHeight) {
+                    snake[0].y = 0;
+                }
+                
+                // 创建传送效果
+                createTeleportEffect(head);
+            } else {
+                // 传统模式：撞墙死亡
+                createExplosionEffect(head.x, head.y);
+                gameOver();
+                return;
+            }
         }
         
         // 检查是否撞到自己（从第2个片段开始检查）
@@ -941,6 +962,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameOver();
                 return;
             }
+        }
+    }
+    
+    // 创建传送特效
+    function createTeleportEffect(head) {
+        if (!gameSettings.showParticles) return;
+        
+        // 确定传送起点和终点
+        let fromX = head.x, fromY = head.y;
+        let toX = head.x, toY = head.y;
+        
+        // 调整边界值以确保特效可见
+        if (fromX < 0) fromX = 0;
+        if (fromX >= gridWidth) fromX = gridWidth - 1;
+        if (fromY < 0) fromY = 0;
+        if (fromY >= gridHeight) fromY = gridHeight - 1;
+        
+        // 创建闪光效果
+        const flash = document.createElement('div');
+        flash.className = 'teleport-flash';
+        flash.style.left = `${fromX * gridSize}px`;
+        flash.style.top = `${fromY * gridSize}px`;
+        flash.style.width = `${gridSize}px`;
+        flash.style.height = `${gridSize}px`;
+        document.querySelector('.svg-container').appendChild(flash);
+        
+        // 闪光结束后移除
+        setTimeout(() => {
+            if (flash.parentNode) {
+                flash.parentNode.removeChild(flash);
+            }
+        }, 500);
+        
+        // 创建传送粒子
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'teleport-particle';
+            particle.style.left = `${fromX * gridSize + gridSize / 2}px`;
+            particle.style.top = `${fromY * gridSize + gridSize / 2}px`;
+            
+            // 随机颜色
+            const hue = Math.floor(Math.random() * 60) + 180; // 蓝色到青色范围
+            particle.style.backgroundColor = `hsl(${hue}, 100%, 60%)`;
+            
+            // 设置随机轨迹
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 30 + 10;
+            const size = Math.random() * 6 + 2;
+            
+            particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+            particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            document.querySelector('.svg-container').appendChild(particle);
+            
+            // 动画结束后移除粒子
+            setTimeout(() => {
+                if (particle.parentNode) {
+                    particle.parentNode.removeChild(particle);
+                }
+            }, 500);
         }
     }
     
@@ -1048,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 更新开关
         particlesToggle.checked = gameSettings.showParticles;
         bgAnimationToggle.checked = gameSettings.showBackgroundAnimation;
+        teleportToggle.checked = gameSettings.teleportEnabled;
     }
     
     // 保存设置
@@ -1074,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameSettings.showParticles = true;
         gameSettings.showBackgroundAnimation = true;
         gameSettings.colorTheme = 'green';
+        gameSettings.teleportEnabled = false;
         
         updateSettingsUI();
     }
@@ -1232,6 +1317,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     bgAnimationToggle.addEventListener('change', () => {
         gameSettings.showBackgroundAnimation = bgAnimationToggle.checked;
+    });
+    
+    teleportToggle.addEventListener('change', () => {
+        gameSettings.teleportEnabled = teleportToggle.checked;
     });
     
     // 按钮点击事件

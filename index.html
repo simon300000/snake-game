@@ -69,7 +69,7 @@
             <p>使用方向键 ↑ ↓ ← → 控制蛇的移动方向</p>
             <p>在移动设备上可以滑动屏幕或使用触摸按钮控制</p>
             <p>吃到食物会增加分数和蛇的长度</p>
-            <p>撞到墙壁或自己会结束游戏</p>
+            <p>撞到墙壁或自己会结束游戏 (可在设置中开启边界传送功能)</p>
             <p>空格键或暂停按钮可暂停/继续游戏</p>
             <p>游戏中会随机出现特殊能力道具:</p>
             <div class="power-up-info">
@@ -128,6 +128,19 @@
                             <input type="checkbox" id="bg-animation-toggle" checked>
                             <span class="slider round"></span>
                         </label>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-group">
+                <label>游戏模式</label>
+                <div class="effects-settings">
+                    <div class="toggle-setting">
+                        <span>边界传送</span>
+                        <label class="switch">
+                            <input type="checkbox" id="teleport-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <div class="setting-desc">让蛇能够穿越边界而不会死亡</div>
                     </div>
                 </div>
             </div>
